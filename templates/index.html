@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - CVE Generator{% endblock %}
+
+{% block content %}
+<div class="index-container">
+    <h1>Welcome to the CVE Generator</h1>
+    <p>Enter a CVE ID to generate a detailed report with exploits and affected assets.</p>
+    
+    <form method="POST" action="{{ url_for('index') }}">
+        <label for="cve_id">Enter CVE ID:</label>
+        <input type="text" id="cve_id" name="cve_id" required>
+        <button type="submit">Submit</button>
+    </form>
+</div>
+{% endblock %}

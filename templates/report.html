@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}CVE Report{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <h1>CVE Report for {{ cve_id }}</h1>
+    <h2 class="cvss-score">CVSS Score: {{ cvss_score }} | {{ cvss_vector }}</h2>
+    <p>{{ description }}</p>
+
+    <h3>Affected Assets</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Vendor</th>
+                <th>Product</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asset in affected_assets %}
+            <tr>
+                <td>{{ asset.vendor }}</td>
+                <td>{{ asset.product }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Exploits</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Exploit Title</th>
+                <th>Download Link</th>
+                <th>Exploit-DB Link</th>
+                <th>Verified</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exploit in exploits %}
+            <tr>
+                <td>{{ exploit.title }}</td>
+                <td><a href="{{ exploit.download_link }}" target="_blank">Download</a></td>
+                <td><a href="{{ exploit.exploit_link }}" target="_blank">View Exploit</a></td>
+                <td>{{ exploit.verified }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,148 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: white;
+    margin: 0;
+    padding: 0;
+}
+
+/* Container Styles */
+.index-container {
+    max-width: 600px;
+    margin: 20px auto; /* Center container horizontally */
+    padding: 20px;
+    background-color: #1e1e1e;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    text-align: center; /* Center text within container */
+}
+
+/* Form Styles */
+label {
+    display: block;
+    margin: 10px 0 5px;
+    font-size: 1.2em;
+    color: #FFFFFF;
+}
+
+input[type="text"] {
+    width: calc(100% - 22px); /* Adjust width to fit padding and border */
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #333;
+    color: #FFF;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #645394;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #51427a;
+}
+
+/* Navigation Styles */
+header {
+    background-color: #1e1e1e;
+    padding: 10px 0;
+    text-align: center;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin: 0 15px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #FFFFFF;
+    font-size: 1.2em;
+}
+
+nav ul li a:hover {
+    text-decoration: underline;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+}
+
+th {
+    background-color: #333;
+    color: #FFFFFF;
+}
+
+td {
+    background-color: #1e1e1e;
+}
+
+a {
+    color: #1e90ff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Heading Styles */
+h1, h2, h3 {
+    color: #FFFFFF;
+}
+
+h1 {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 1.5em;
+    color: red; /* For CVSS Score */
+}
+
+h3 {
+    margin-top: 20px;
+    font-size: 1.2em;
+}
+
+/* CVSS Score Styles */
+.cvss-score {
+    color: red;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+/* Footer Styles */
+footer {
+    background-color: #1e1e1e;
+    color: #FFFFFF;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
