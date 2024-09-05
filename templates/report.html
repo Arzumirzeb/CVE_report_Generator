@@ -17,12 +17,18 @@
             </tr>
         </thead>
         <tbody>
-            {% for asset in affected_assets %}
-            <tr>
-                <td>{{ asset.vendor }}</td>
-                <td>{{ asset.product }}</td>
-            </tr>
-            {% endfor %}
+            {% if affected_assets %}
+                {% for asset in affected_assets %}
+                <tr>
+                    <td>{{ asset.vendor }}</td>
+                    <td>{{ asset.product }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="2">No affected assets available</td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
 
@@ -37,14 +43,44 @@
             </tr>
         </thead>
         <tbody>
-            {% for exploit in exploits %}
+            {% if exploits %}
+                {% for exploit in exploits %}
+                <tr>
+                    <td>{{ exploit.title }}</td>
+                    <td><a href="{{ exploit.download_link }}" target="_blank">Download</a></td>
+                    <td><a href="{{ exploit.exploit_link }}" target="_blank">View Exploit</a></td>
+                    <td>{{ exploit.verified }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4">No exploits available</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <h3>References</h3>
+    <table>
+        <thead>
             <tr>
-                <td>{{ exploit.title }}</td>
-                <td><a href="{{ exploit.download_link }}" target="_blank">Download</a></td>
-                <td><a href="{{ exploit.exploit_link }}" target="_blank">View Exploit</a></td>
-                <td>{{ exploit.verified }}</td>
+                <th>Description</th>
+                <th>Link</th>
             </tr>
-            {% endfor %}
+        </thead>
+        <tbody>
+            {% if references %}
+                {% for reference in references %}
+                <tr>
+                    <td>{{ reference.description }}</td>
+                    <td><a href="{{ reference.link }}" target="_blank">View Reference</a></td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="2">No references available</td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
 </div>

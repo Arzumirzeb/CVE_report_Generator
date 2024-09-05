@@ -1,5 +1,74 @@
 import requests
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException
+import time
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+
+def get_exploits(cve_id):
+    """Extract exploits from Exploit-DB using Selenium."""
+    
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument("--log-level=3")
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    wait = WebDriverWait(driver, 10)
+
+    url = f"https://www.exploit-db.com/search?cve={cve_id}"
+    driver.get(url)
+    driver.implicitly_wait(15)
+    time.sleep(10)  # Ensure the page is fully loaded
+
+    tbody_elements = driver.find_elements(By.XPATH, "//tbody")
+    all_tr_elements = tbody_elements[0].find_elements(By.TAG_NAME, "tr")
+    verified_tr_elements = []
+    unverified_tr_elements = []
+    
+    for tr_element in all_tr_elements:
+        try:
+            tr_element.find_element(By.XPATH, './/i[@class="mdi mdi-check mdi-18px"]')
+            verified_tr_elements.append(tr_element)
+        except NoSuchElementException:
+            try:
+                tr_element.find_element(By.XPATH, './/i[@class="mdi mdi-close mdi-18px"]')
+                unverified_tr_elements.append(tr_element)
+            except NoSuchElementException:
+                pass
+
+    exploits = []
+    previous_href = None
+
+    def extract_exploits(tr_elements, verified):
+        nonlocal previous_href
+        for tr_element in tr_elements:
+            a_tags = tr_element.find_elements(By.TAG_NAME, "a")
+            for a_tag in a_tags:
+                href = a_tag.get_attribute('href')
+                if href:
+                    if "/exploits" in href:
+                        if previous_href is not None:
+                            exploits.append({
+                                "title": a_tag.get_attribute('innerText'),
+                                "exploit_link": href,
+                                "download_link": previous_href,
+                                "verified": "YES" if verified else "NO"
+                            })
+                        previous_href = None
+                    elif "/download" in href:
+                        previous_href = href
+
+    extract_exploits(verified_tr_elements, verified=True)
+    extract_exploits(unverified_tr_elements, verified=False)
+
+    if not exploits:
+        exploits.append({"title": "N/A", "exploit_link": "N/A", "download_link": "N/A", "verified": "N/A"})
+
+    driver.quit()
+    return exploits
 
 def get_info(cve_id):
     """Fetch CVE details from NVD and Exploit-DB."""
@@ -35,23 +104,20 @@ def get_info(cve_id):
             vendor = cols[0].text.strip() if len(cols) > 0 else "N/A"
             product = cols[1].text.strip() if len(cols) > 1 else "N/A"
             affected_assets.append({"vendor": vendor, "product": product})
-
-    # Extract Exploits from Exploit-DB
-    exploits = []
-    exploit_db_url = f"https://www.exploit-db.com/search?cve={cve_id}"
-    response = requests.get(exploit_db_url)
-    soup = BeautifulSoup(response.text, "html.parser")
-    exploits_table = soup.find("table", {"class": "table table-bordered table-hover"})
-    if exploits_table:
-        rows = exploits_table.find_all("tr")[1:]  # Skip header row
+    
+    # Extract References (Advisories, Patches, and Tools)
+    references = []
+    ref_table = soup.find("table", {"data-testid": "vuln-hyperlinks-table"})
+    if ref_table:
+        rows = ref_table.find_all("tr")[1:]  # Skip header row
         for row in rows:
             cols = row.find_all("td")
-            if len(cols) > 2:
-                title = cols[0].text.strip()
-                exploit_link = cols[0].find("a")["href"].strip() if cols[0].find("a") else "N/A"
-                download_link = cols[1].text.strip()
-                verified = "YES" if "mdi-check" in row.decode_contents() else "NO"
-                exploits.append({"title": title, "exploit_link": exploit_link, "download_link": download_link, "verified": verified})
+            ref_link = cols[0].find("a")["href"].strip() if cols[0].find("a") else "N/A"
+            ref_desc = cols[0].text.strip() if cols[0] else "N/A"
+            references.append({"description": ref_desc, "link": ref_link})
+
+    # Extract Exploits from Exploit-DB
+    exploits = get_exploits(cve_id)
 
     return {
         "cve_title": cve_title,
@@ -59,5 +125,6 @@ def get_info(cve_id):
         "cvss_vector": cvss_vector,
         "description": description,
         "affected_assets": affected_assets,
+        "references": references,
         "exploits": exploits
     }
