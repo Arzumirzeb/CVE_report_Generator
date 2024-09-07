@@ -4,9 +4,12 @@
 
 {% block content %}
 <div class="report-container">
-    <h1>CVE Report for {{ cve_id }}</h1>
+    <!-- Display CVE Name -->
+    <h1>{{ cve_title }}</h1>
     
-    <h2 class="cvss-score">CVSS Score: {{ cvss_score }} | {{ cvss_vector }}</h2>
+    <!-- Display CVSS Score -->
+    <h2 class="cvss-score">CVSS Score: <span class="cvss-value">{{ cvss_score }}</span></h2>
+    <p>CVSS: {{ cvss_vector }}</p>
     
     <!-- Display CVE State -->
     <p><strong>State:</strong> {{ state }}</p>
@@ -88,5 +91,14 @@
             {% endif %}
         </tbody>
     </table>
+
+    <!-- Download Links -->
+    <div class="download-links">
+        <h3>Download Report</h3>
+        <a href="{{ url_for('download', file_type='pdf') }}" class="btn">Download PDF</a>
+        <a href="{{ url_for('download', file_type='docx') }}" class="btn">Download DOCX</a>
+        <a href="{{ url_for('download', file_type='html') }}" class="btn">Download HTML</a>
+        <a href="{{ url_for('download', file_type='md') }}" class="btn">Download Markdown</a>
+    </div>
 </div>
 {% endblock %}

@@ -135,3 +135,4 @@ def get_info(cve_id):
         "exploits": exploits,
         "state": cve_state  # Include CVE state in the returned data
     }
+
