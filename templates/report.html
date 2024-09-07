@@ -5,7 +5,12 @@
 {% block content %}
 <div class="report-container">
     <h1>CVE Report for {{ cve_id }}</h1>
+    
     <h2 class="cvss-score">CVSS Score: {{ cvss_score }} | {{ cvss_vector }}</h2>
+    
+    <!-- Display CVE State -->
+    <p><strong>State:</strong> {{ state }}</p>
+    
     <p>{{ description }}</p>
 
     <h3>Affected Assets</h3>

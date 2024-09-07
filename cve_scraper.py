@@ -71,7 +71,7 @@ def get_exploits(cve_id):
     return exploits
 
 def get_info(cve_id):
-    """Fetch CVE details from NVD and Exploit-DB."""
+    """Fetch CVE details from NVD, MITRE, and Exploit-DB."""
     
     # URL for NVD CVE detail page
     nvd_url = f"https://nvd.nist.gov/vuln/detail/{cve_id}"
@@ -94,16 +94,22 @@ def get_info(cve_id):
     description_element = soup.find("p", {"data-testid": "vuln-description"})
     description = description_element.text.strip() if description_element else "Description not available"
     
-    # Extract Affected Assets
+    # Fetch vendor and product details from MITRE API
+    mitre_api_url = f"https://cveawg.mitre.org/api/cve/{cve_id}"
+    mitre_response = requests.get(mitre_api_url).json()
+    
     affected_assets = []
-    assets_table = soup.find("table", {"data-testid": "vuln-assets"})
-    if assets_table:
-        rows = assets_table.find_all("tr")[1:]  # Skip header row
-        for row in rows:
-            cols = row.find_all("td")
-            vendor = cols[0].text.strip() if len(cols) > 0 else "N/A"
-            product = cols[1].text.strip() if len(cols) > 1 else "N/A"
+    try:
+        affected_list = mitre_response['containers']['cna']['affected']
+        for asset in affected_list:
+            vendor = asset.get('vendor', 'N/A')
+            product = asset.get('product', 'N/A')
             affected_assets.append({"vendor": vendor, "product": product})
+    except KeyError:
+        affected_assets.append({"vendor": "N/A", "product": "N/A"})
+    
+    # Extract CVE State
+    cve_state = mitre_response.get('cveMetadata', {}).get('state', 'Not Available')
     
     # Extract References (Advisories, Patches, and Tools)
     references = []
@@ -126,5 +132,6 @@ def get_info(cve_id):
         "description": description,
         "affected_assets": affected_assets,
         "references": references,
-        "exploits": exploits
+        "exploits": exploits,
+        "state": cve_state  # Include CVE state in the returned data
     }
