@@ -1,16 +1,36 @@
-{% extends 'base.html' %}
-
-{% block title %}Home - CVE Generator{% endblock %}
-
-{% block content %}
-<div class="index-container">
-    <h1>Welcome to the CVE Generator</h1>
-    <p>Enter a CVE ID to generate a detailed report with exploits and affected assets.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVE Checker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <!-- Add other navigation links if needed -->
+            </ul>
+        </nav>
+    </header>
     
-    <form method="POST" action="{{ url_for('index') }}">
-        <label for="cve_id">Enter CVE ID:</label>
-        <input type="text" id="cve_id" name="cve_id" required>
-        <button type="submit">Submit</button>
-    </form>
-</div>
-{% endblock %}
+    <div class="index-container">
+        <h1>CVE Checker</h1>
+        <form method="post">
+            <label for="cve_id">Enter CVE ID:</label>
+            <input type="text" id="cve_id" name="cve_id" placeholder="E.g. CVE-2017-0144" required>
+            <button type="submit">Check</button>
+        </form>
+
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
+    </div>
+    
+    <footer>
+        <p>&copy; 2024 CVE Checker</p>
+    </footer>
+</body>
+</html>
