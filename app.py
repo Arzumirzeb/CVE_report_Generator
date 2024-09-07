@@ -41,7 +41,7 @@ def index():
             create_html(info, file_paths["html"])
             create_md(info, file_paths["md"])
         except Exception as e:
-            return render_template('index.html', error=f"Error generating reports: {e}")
+            return render_template('index.html', error=f"Error generating reports: {str(e)}")
 
         return render_template('report.html', **info)
     
@@ -64,6 +64,7 @@ def download(file_type):
     
     # If file not found, return an error message
     return render_template('index.html', error="File not found."), 404
+
 
 if __name__ == '__main__':
     app.run(debug=True)

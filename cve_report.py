@@ -9,39 +9,53 @@ def create_pdf(cve_info, file_path):
     c = canvas.Canvas(file_path, pagesize=letter)
     width, height = letter
 
+    # Set font and initial position
     c.setFont("Helvetica", 12)
-    c.drawString(1 * inch, height - 1 * inch, f"CVE Report for {cve_info['cve_title']}")
+    y_position = height - 1 * inch
 
-    c.drawString(1 * inch, height - 1.5 * inch, f"CVSS Score: {cve_info['cvss_score']} | CVSS Vector: {cve_info['cvss_vector']}")
-    c.drawString(1 * inch, height - 2 * inch, f"Description: {cve_info['description']}")
+    # Title
+    c.drawString(1 * inch, y_position, f"CVE Report for {cve_info['cve_title']}")
+    y_position -= 0.5 * inch
 
-    y_position = height - 3 * inch
+    # CVSS Score and Vector
+    c.drawString(1 * inch, y_position, f"CVSS Score: {cve_info['cvss_score']} | CVSS Vector: {cve_info['cvss_vector']}")
+    y_position -= 0.5 * inch
 
+    # Description
+    description = f"Description: {cve_info['description']}"
+    c.drawString(1 * inch, y_position, description)
+    y_position -= 0.5 * inch
+
+    # Affected Assets
     c.drawString(1 * inch, y_position, "Affected Assets:")
     y_position -= 0.5 * inch
 
-    for asset in cve_info['affected_assets']:
-        c.drawString(1 * inch, y_position, f"Vendor: {asset['vendor']}, Product: {asset['product']}")
+    for asset in cve_info.get('affected_assets', []):
+        asset_text = f"Vendor: {asset.get('vendor', 'N/A')}, Product: {asset.get('product', 'N/A')}"
+        c.drawString(1 * inch, y_position, asset_text)
         y_position -= 0.25 * inch
 
     y_position -= 0.5 * inch
     c.drawString(1 * inch, y_position, "Exploits:")
     y_position -= 0.5 * inch
 
-    for exploit in cve_info['exploits']:
-        c.drawString(1 * inch, y_position, f"Title: {exploit['title']}, Verified: {exploit['verified']}")
-        c.drawString(1 * inch, y_position - 0.25 * inch, f"Download Link: {exploit['download_link']}")
-        c.drawString(1 * inch, y_position - 0.5 * inch, f"Exploit Link: {exploit['exploit_link']}")
+    for exploit in cve_info.get('exploits', []):
+        exploit_text = f"Title: {exploit.get('title', 'N/A')}, Verified: {exploit.get('verified', 'N/A')}"
+        c.drawString(1 * inch, y_position, exploit_text)
+        c.drawString(1 * inch, y_position - 0.25 * inch, f"Download Link: {exploit.get('download_link', 'N/A')}")
+        c.drawString(1 * inch, y_position - 0.5 * inch, f"Exploit Link: {exploit.get('exploit_link', 'N/A')}")
         y_position -= 0.75 * inch
 
     y_position -= 0.5 * inch
     c.drawString(1 * inch, y_position, "References:")
     y_position -= 0.5 * inch
 
-    for ref in cve_info['references']:
-        c.drawString(1 * inch, y_position, f"Description: {ref['description']}, Link: {ref['link']}")
+    for ref in cve_info.get('references', []):
+        ref_text = f"Description: {ref.get('description', 'N/A')}, Link: {ref.get('link', 'N/A')}"
+        c.drawString(1 * inch, y_position, ref_text)
         y_position -= 0.5 * inch
 
+    # Save the PDF
     c.save()
 
 

@@ -6,7 +6,6 @@
 <div class="report-container">
     <h1>{{ cve_title }}</h1>
     <h2 class="cvss-score">CVSS Score: <span class="cvss-value">{{ cvss_score }}</span></h2>
-    <p>CVSS Vector: {{ cvss_vector }}</p>
     <p><strong>State:</strong> {{ state }}</p>
     <p>{{ description }}</p>
 
@@ -86,9 +85,9 @@
         </tbody>
     </table>
 
-    <div class="dropdown">
-        <button class="dropbtn">Download Report</button>
-        <div class="dropdown-content">
+    <div class="download-report">
+        <div class="header" onclick="toggleReport()">Download Report</div>
+        <div class="content">
             <a href="{{ url_for('download', file_type='pdf') }}">Download PDF</a>
             <a href="{{ url_for('download', file_type='docx') }}">Download DOCX</a>
             <a href="{{ url_for('download', file_type='html') }}">Download HTML</a>
@@ -96,4 +95,11 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleReport() {
+    var reportSection = document.querySelector('.download-report');
+    reportSection.classList.toggle('active');
+}
+</script>
 {% endblock %}

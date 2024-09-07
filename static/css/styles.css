@@ -172,50 +172,53 @@ h3 {
     color: red; /* Highlighted color for CVSS Value */
 }
 
-/* Download Links Dropdown Styles */
-.dropdown {
+/* Download Report Section */
+.download-report {
     position: relative;
     display: inline-block;
     margin-top: 20px;
 }
 
-.dropbtn {
+.download-report .header {
     background-color: #645394;
     color: white;
     padding: 10px 20px;
-    font-size: 1em;
-    border: none;
     border-radius: 5px;
+    font-size: 1em;
     cursor: pointer;
+    text-align: center; /* Center text within the header */
 }
 
-.dropbtn:hover {
-    background-color: #51427a;
-}
-
-.dropdown-content {
-    display: none;
-    position: absolute;
+.download-report .content {
+    display: none; /* Hide by default */
     background-color: #1e1e1e;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     border-radius: 5px;
-    z-index: 1;
-    width: 100%; /* Ensure dropdown width is the same as button width */
-    margin-top: 5px; /* Add margin to avoid overlapping with button */
+    margin-top: 10px;
+    padding: 10px;
+    text-align: center; /* Center text in the content area */
 }
 
-.dropdown-content a {
-    color: #FFFFFF;
-    padding: 10px 20px;
+.download-report .content a {
     display: block;
+    background-color: #1e1e1e;
+    color: #FFFFFF;
     text-decoration: none;
+    border: none;
+    padding: 10px 20px;
+    border-bottom: 1px solid #444; /* Separator between links */
+    cursor: pointer;
+    text-align: center;
+    font-size: 1em;
+    margin-bottom: 5px; /* Space between buttons */
 }
 
-.dropdown-content a:hover {
+.download-report .content a:hover {
     background-color: #333;
 }
 
-.dropdown:hover .dropdown-content {
+/* Show content on click */
+.download-report.active .content {
     display: block;
 }
 
