@@ -4,16 +4,10 @@
 
 {% block content %}
 <div class="report-container">
-    <!-- Display CVE Name -->
     <h1>{{ cve_title }}</h1>
-    
-    <!-- Display CVSS Score -->
     <h2 class="cvss-score">CVSS Score: <span class="cvss-value">{{ cvss_score }}</span></h2>
-    <p>CVSS: {{ cvss_vector }}</p>
-    
-    <!-- Display CVE State -->
+    <p>CVSS Vector: {{ cvss_vector }}</p>
     <p><strong>State:</strong> {{ state }}</p>
-    
     <p>{{ description }}</p>
 
     <h3>Affected Assets</h3>
@@ -92,13 +86,14 @@
         </tbody>
     </table>
 
-    <!-- Download Links -->
-    <div class="download-links">
-        <h3>Download Report</h3>
-        <a href="{{ url_for('download', file_type='pdf') }}" class="btn">Download PDF</a>
-        <a href="{{ url_for('download', file_type='docx') }}" class="btn">Download DOCX</a>
-        <a href="{{ url_for('download', file_type='html') }}" class="btn">Download HTML</a>
-        <a href="{{ url_for('download', file_type='md') }}" class="btn">Download Markdown</a>
+    <div class="dropdown">
+        <button class="dropbtn">Download Report</button>
+        <div class="dropdown-content">
+            <a href="{{ url_for('download', file_type='pdf') }}">Download PDF</a>
+            <a href="{{ url_for('download', file_type='docx') }}">Download DOCX</a>
+            <a href="{{ url_for('download', file_type='html') }}">Download HTML</a>
+            <a href="{{ url_for('download', file_type='md') }}">Download Markdown</a>
+        </div>
     </div>
 </div>
 {% endblock %}

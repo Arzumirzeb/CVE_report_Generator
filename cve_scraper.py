@@ -50,7 +50,7 @@ def get_exploits(cve_id):
                 href = a_tag.get_attribute('href')
                 if href:
                     if "/exploits" in href:
-                        if previous_href is not None:
+                        if previous_href:
                             exploits.append({
                                 "title": a_tag.get_attribute('innerText'),
                                 "exploit_link": href,
@@ -77,8 +77,13 @@ def get_info(cve_id):
     nvd_url = f"https://nvd.nist.gov/vuln/detail/{cve_id}"
     
     # Send request to NVD page and parse HTML response
-    response = requests.get(nvd_url)
-    soup = BeautifulSoup(response.text, "html.parser")
+    try:
+        response = requests.get(nvd_url, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching NVD data: {e}")
+        soup = BeautifulSoup("", "html.parser")  # Use an empty soup if the request fails
     
     # Extract CVE Title
     title_element = soup.find("span", {"data-testid": "vuln-title"})
@@ -96,20 +101,22 @@ def get_info(cve_id):
     
     # Fetch vendor and product details from MITRE API
     mitre_api_url = f"https://cveawg.mitre.org/api/cve/{cve_id}"
-    mitre_response = requests.get(mitre_api_url).json()
-    
-    affected_assets = []
     try:
-        affected_list = mitre_response['containers']['cna']['affected']
+        mitre_response = requests.get(mitre_api_url, timeout=10).json()
+        affected_assets = []
+        affected_list = mitre_response.get('containers', {}).get('cna', {}).get('affected', [])
         for asset in affected_list:
             vendor = asset.get('vendor', 'N/A')
             product = asset.get('product', 'N/A')
             affected_assets.append({"vendor": vendor, "product": product})
-    except KeyError:
-        affected_assets.append({"vendor": "N/A", "product": "N/A"})
+        
+        # Extract CVE State
+        cve_state = mitre_response.get('cveMetadata', {}).get('state', 'Not Available')
     
-    # Extract CVE State
-    cve_state = mitre_response.get('cveMetadata', {}).get('state', 'Not Available')
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching MITRE data: {e}")
+        affected_assets = [{"vendor": "N/A", "product": "N/A"}]
+        cve_state = "Not Available"
     
     # Extract References (Advisories, Patches, and Tools)
     references = []
@@ -135,4 +142,3 @@ def get_info(cve_id):
         "exploits": exploits,
         "state": cve_state  # Include CVE state in the returned data
     }
-
