@@ -65,6 +65,5 @@ def download(file_type):
     # If file not found, return an error message
     return render_template('index.html', error="File not found."), 404
 
-
 if __name__ == '__main__':
     app.run(debug=True)

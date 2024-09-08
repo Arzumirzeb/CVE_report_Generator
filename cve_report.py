@@ -1,89 +1,107 @@
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
 from docx import Document
 from markdown2 import markdown
 
 def create_pdf(cve_info, file_path):
-    """Generate a PDF report."""
-    c = canvas.Canvas(file_path, pagesize=letter)
-    width, height = letter
+    """Generate a PDF report without tables and with a simple list for references."""
+    doc = SimpleDocTemplate(file_path, pagesize=letter)
+    elements = []
 
-    # Set font and initial position
-    c.setFont("Helvetica", 12)
-    y_position = height - 1 * inch
+    # Define styles
+    styles = getSampleStyleSheet()
+    heading_style = styles['Heading1']
+    body_style = styles['BodyText']
 
     # Title
-    c.drawString(1 * inch, y_position, f"CVE Report for {cve_info['cve_title']}")
-    y_position -= 0.5 * inch
+    title = f"CVE Report for {cve_info['cve_title']}"
+    elements.append(Paragraph(title, heading_style))
+    elements.append(Spacer(1, 0.2*inch))  # Add space after the title
 
     # CVSS Score and Vector
-    c.drawString(1 * inch, y_position, f"CVSS Score: {cve_info['cvss_score']} | CVSS Vector: {cve_info['cvss_vector']}")
-    y_position -= 0.5 * inch
+    cvss_score_vector = f"CVSS Score: {cve_info['cvss_score']} | CVSS Vector: {cve_info['cvss_vector']}"
+    elements.append(Paragraph(cvss_score_vector, body_style))
+    
+    # State
+    state = f"State: {cve_info.get('state', 'N/A')}"
+    elements.append(Paragraph(state, body_style))
+    elements.append(Spacer(1, 0.4*inch))  # Add more space before the description
 
     # Description
     description = f"Description: {cve_info['description']}"
-    c.drawString(1 * inch, y_position, description)
-    y_position -= 0.5 * inch
+    elements.append(Paragraph(description, body_style))
+    elements.append(Spacer(1, 0.4*inch))  # Add space before the affected assets
 
     # Affected Assets
-    c.drawString(1 * inch, y_position, "Affected Assets:")
-    y_position -= 0.5 * inch
+    if cve_info.get('affected_assets'):
+        assets_header = Paragraph("Affected Assets:", heading_style)
+        elements.append(assets_header)
+        for asset in cve_info['affected_assets']:
+            asset_text = f"Vendor: {asset.get('vendor', 'N/A')}, Product: {asset.get('product', 'N/A')}"
+            elements.append(Paragraph(asset_text, body_style))
+        elements.append(Spacer(1, 0.4*inch))  # Add space before the exploits
 
-    for asset in cve_info.get('affected_assets', []):
-        asset_text = f"Vendor: {asset.get('vendor', 'N/A')}, Product: {asset.get('product', 'N/A')}"
-        c.drawString(1 * inch, y_position, asset_text)
-        y_position -= 0.25 * inch
+    # Exploits
+    if cve_info.get('exploits'):
+        exploits_header = Paragraph("Exploits:", heading_style)
+        elements.append(exploits_header)
+        for exploit in cve_info['exploits']:
+            exploit_text = f"Title: {exploit.get('title', 'N/A')}, Verified: {exploit.get('verified', 'N/A')}"
+            elements.append(Paragraph(exploit_text, body_style))
+        elements.append(Spacer(1, 0.4*inch))  # Add space before references
 
-    y_position -= 0.5 * inch
-    c.drawString(1 * inch, y_position, "Exploits:")
-    y_position -= 0.5 * inch
+    # References
+    if cve_info.get('references'):
+        references_header = Paragraph("References:", heading_style)
+        elements.append(references_header)
+        for index, ref in enumerate(cve_info['references'], start=1):
+            ref_text = f"{index}. {ref.get('link', 'N/A')}"
+            elements.append(Paragraph(ref_text, body_style))
 
-    for exploit in cve_info.get('exploits', []):
-        exploit_text = f"Title: {exploit.get('title', 'N/A')}, Verified: {exploit.get('verified', 'N/A')}"
-        c.drawString(1 * inch, y_position, exploit_text)
-        c.drawString(1 * inch, y_position - 0.25 * inch, f"Download Link: {exploit.get('download_link', 'N/A')}")
-        c.drawString(1 * inch, y_position - 0.5 * inch, f"Exploit Link: {exploit.get('exploit_link', 'N/A')}")
-        y_position -= 0.75 * inch
-
-    y_position -= 0.5 * inch
-    c.drawString(1 * inch, y_position, "References:")
-    y_position -= 0.5 * inch
-
-    for ref in cve_info.get('references', []):
-        ref_text = f"Description: {ref.get('description', 'N/A')}, Link: {ref.get('link', 'N/A')}"
-        c.drawString(1 * inch, y_position, ref_text)
-        y_position -= 0.5 * inch
-
-    # Save the PDF
-    c.save()
+    # Build PDF
+    doc.build(elements)
 
 
 def create_docx(cve_info, file_path):
     """Generate a DOCX report."""
     doc = Document()
+
+    # Title
     doc.add_heading(f"CVE Report for {cve_info['cve_title']}", level=1)
-    
+
+    # CVSS Score and Vector
     doc.add_paragraph(f"CVSS Score: {cve_info['cvss_score']} | CVSS Vector: {cve_info['cvss_vector']}")
+    
+    # State
+    doc.add_paragraph(f"State: {cve_info.get('state', 'N/A')}")
+
+    # Description
     doc.add_paragraph(f"Description: {cve_info['description']}")
 
-    doc.add_heading('Affected Assets:', level=2)
-    for asset in cve_info['affected_assets']:
-        doc.add_paragraph(f"Vendor: {asset['vendor']}, Product: {asset['product']}")
-    
-    doc.add_heading('Exploits:', level=2)
-    for exploit in cve_info['exploits']:
-        doc.add_paragraph(f"Title: {exploit['title']}")
-        doc.add_paragraph(f"Verified: {exploit['verified']}")
-        doc.add_paragraph(f"Download Link: {exploit['download_link']}")
-        doc.add_paragraph(f"Exploit Link: {exploit['exploit_link']}")
-    
-    doc.add_heading('References:', level=2)
-    for ref in cve_info['references']:
-        doc.add_paragraph(f"Description: {ref['description']}")
-        doc.add_paragraph(f"Link: {ref['link']}")
-    
+    # Affected Assets
+    if cve_info.get('affected_assets'):
+        doc.add_heading('Affected Assets:', level=2)
+        for asset in cve_info['affected_assets']:
+            doc.add_paragraph(f"Vendor: {asset.get('vendor', 'N/A')}, Product: {asset.get('product', 'N/A')}")
+
+    # Exploits (Just title and whether verified or not)
+    if cve_info.get('exploits'):
+        doc.add_heading('Exploits:', level=2)
+        for exploit in cve_info['exploits']:
+            doc.add_paragraph(f"Title: {exploit.get('title', 'N/A')}, Verified: {exploit.get('verified', 'N/A')}")
+
+    # References (Just links, ordered)
+    if cve_info.get('references'):
+        doc.add_heading('References:', level=2)
+        for index, ref in enumerate(cve_info['references'], start=1):
+            doc.add_paragraph(f"{index}. {ref.get('link', 'N/A')}")
+
+    # Save the DOCX
     doc.save(file_path)
+
 
 def create_html(cve_info, file_path):
     """Generate an HTML report."""

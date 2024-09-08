@@ -92,8 +92,16 @@ def get_info(cve_id):
     # Extract CVSS Score and Vector
     cvss_score_element = soup.find("a", {"data-testid": "vuln-cvss3-panel-score"})
     cvss_score = cvss_score_element.text.strip() if cvss_score_element else "CVSS Score not available"
+    
+    # Extract CVSS Vector
+    # The vector might be found in a different element or format. Adjust the selector if needed.
     vector_element = soup.find("span", {"data-testid": "vuln-cvss3-nist-vector"})
-    cvss_vector = vector_element.text.strip() if vector_element else "CVSS Vector not available"
+    if vector_element:
+        cvss_vector = vector_element.text.strip()
+    else:
+        # Fallback to a different method if the primary selector fails
+        vector_fallback_element = soup.find("div", {"class": "cvss-vector"})
+        cvss_vector = vector_fallback_element.text.strip() if vector_fallback_element else "CVSS Vector not available"
     
     # Extract Description
     description_element = soup.find("p", {"data-testid": "vuln-description"})
@@ -142,3 +150,4 @@ def get_info(cve_id):
         "exploits": exploits,
         "state": cve_state  # Include CVE state in the returned data
     }
+
