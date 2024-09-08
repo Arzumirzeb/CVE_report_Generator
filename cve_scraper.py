@@ -5,77 +5,83 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 import time
+import json
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-def get_exploits(cve_id):
-    """Extract exploits from Exploit-DB using Selenium."""
-    
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument("--log-level=3")
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    wait = WebDriverWait(driver, 10)
+def get_exploits(cve_number):
+    # Setup Chrome options
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Run in headless mode for no GUI
 
-    url = f"https://www.exploit-db.com/search?cve={cve_id}"
+    # Set up ChromeDriver
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
+    # URL of the Exploit-DB search page with the CVE number
+    url = f"https://www.exploit-db.com/search?cve={cve_number}"
+
+    # Open the URL
     driver.get(url)
-    driver.implicitly_wait(15)
-    time.sleep(10)  # Ensure the page is fully loaded
 
-    tbody_elements = driver.find_elements(By.XPATH, "//tbody")
-    all_tr_elements = tbody_elements[0].find_elements(By.TAG_NAME, "tr")
-    verified_tr_elements = []
-    unverified_tr_elements = []
-    
-    for tr_element in all_tr_elements:
-        try:
-            tr_element.find_element(By.XPATH, './/i[@class="mdi mdi-check mdi-18px"]')
-            verified_tr_elements.append(tr_element)
-        except NoSuchElementException:
-            try:
-                tr_element.find_element(By.XPATH, './/i[@class="mdi mdi-close mdi-18px"]')
-                unverified_tr_elements.append(tr_element)
-            except NoSuchElementException:
-                pass
+    # Wait for the page to load
+    time.sleep(5)  # Adjust the sleep time as needed
+
+    # Get page source and close the driver
+    page_source = driver.page_source
+    driver.quit()
+
+    # Parse the page content with BeautifulSoup
+    soup = BeautifulSoup(page_source, 'html.parser')
+
+    # Find the table containing the exploits using id
+    table = soup.find('table', id='exploits-table')
+
+    if not table:
+        print("Exploit table not found")
+        return []
+
+    # Extract table rows
+    tbody = table.find('tbody')
+    rows = tbody.find_all('tr') if tbody else []
 
     exploits = []
-    previous_href = None
+    for row in rows:
+        columns = row.find_all('td')
 
-    def extract_exploits(tr_elements, verified):
-        nonlocal previous_href
-        for tr_element in tr_elements:
-            a_tags = tr_element.find_elements(By.TAG_NAME, "a")
-            for a_tag in a_tags:
-                href = a_tag.get_attribute('href')
-                if href:
-                    if "/exploits" in href:
-                        if previous_href:
-                            exploits.append({
-                                "title": a_tag.get_attribute('innerText'),
-                                "exploit_link": href,
-                                "download_link": previous_href,
-                                "verified": "YES" if verified else "NO"
-                            })
-                        previous_href = None
-                    elif "/download" in href:
-                        previous_href = href
+        # Ensure there are enough columns before accessing
+        if len(columns) < 2:
+            print(f"Skipping row due to insufficient columns: {columns}")
+            continue
 
-    extract_exploits(verified_tr_elements, verified=True)
-    extract_exploits(unverified_tr_elements, verified=False)
+        # Check for verified/unverified status within the current row
+        is_verified = row.find("i", {"class": "mdi-check"}) is not None
+        is_not_verified = row.find("i", {"class": "mdi-close"}) is not None
 
-    if not exploits:
-        exploits.append({"title": "N/A", "exploit_link": "N/A", "download_link": "N/A", "verified": "N/A"})
+        # Extract text from each column safely
+        exploit_data = {
+            'date': columns[0].text.strip(),
+            'download_link': f"https://www.exploit-db.com{columns[1].find('a')['href']}" if columns[1].find('a') else "N/A",
+            'exploit_link': f"https://www.exploit-db.com/exploits/{columns[1].find('a')['href'].split('/')[2]}" if columns[1].find('a') else "N/A",
+            'author': columns[7].text.strip(),
+            'type': columns[5].text.strip(),
+            'platform': columns[6].text.strip(),
+            'title': columns[4].text.strip(),
+            'verified': "Yes" if is_verified else "No" if is_not_verified else "N/A",
+        }
 
-    driver.quit()
+        exploits.append(exploit_data)
+
     return exploits
+
 
 def get_info(cve_id):
     """Fetch CVE details from NVD, MITRE, and Exploit-DB."""
-    
+
     # URL for NVD CVE detail page
     nvd_url = f"https://nvd.nist.gov/vuln/detail/{cve_id}"
-    
+
     # Send request to NVD page and parse HTML response
     try:
         response = requests.get(nvd_url, timeout=10)
@@ -84,29 +90,36 @@ def get_info(cve_id):
     except requests.exceptions.RequestException as e:
         print(f"Error fetching NVD data: {e}")
         soup = BeautifulSoup("", "html.parser")  # Use an empty soup if the request fails
-    
+
     # Extract CVE Title
     title_element = soup.find("span", {"data-testid": "vuln-title"})
     cve_title = title_element.text.strip() if title_element else cve_id  # Use CVE ID if title is not available
-    
+
     # Extract CVSS Score and Vector
-    cvss_score_element = soup.find("a", {"data-testid": "vuln-cvss3-panel-score"})
+    '''cvss_score_element = soup.find("a", {"data-testid": "vuln-cvss3-panel-score"})
     cvss_score = cvss_score_element.text.strip() if cvss_score_element else "CVSS Score not available"
-    
-    # Extract CVSS Vector
-    # The vector might be found in a different element or format. Adjust the selector if needed.
     vector_element = soup.find("span", {"data-testid": "vuln-cvss3-nist-vector"})
-    if vector_element:
-        cvss_vector = vector_element.text.strip()
-    else:
-        # Fallback to a different method if the primary selector fails
-        vector_fallback_element = soup.find("div", {"class": "cvss-vector"})
-        cvss_vector = vector_fallback_element.text.strip() if vector_fallback_element else "CVSS Vector not available"
-    
+    cvss_vector = vector_element.text.strip() if vector_element else "CVSS Vector not available"'''
+
+     # Retrieve the available CVSS base score
+    cvss_element_2 = soup.find("a", {"id": "Cvss2CalculatorAnchor"})
+    cvss_element_3 = soup.find("a", {"data-testid": "vuln-cvss3-panel-score"})
+    cvss_element_4 = soup.find("a", {"data-testid": "vuln-cvss4-panel-score"})
+
+    cvss_score = cvss_element_4.text if cvss_element_4 else cvss_element_3.text if cvss_element_3 else cvss_element_2.text if cvss_element_2 else "Base Score is not available"
+
+    # Retrieve the CVSS vector
+    vector_element_4 = soup.find("span", {"data-testid": "vuln-cvss4-nist-vector"})
+    vector_element_3 = soup.find("span", {"data-testid": "vuln-cvss3-nist-vector"})
+    vector_element_2 = soup.find("span", {"data-testid": "vuln-cvss2-panel-vector"})
+    cvss_vector = vector_element_4.text if vector_element_4 else vector_element_3.text if vector_element_3 else vector_element_2.text if vector_element_2 else "Vector is not available"
+
+
+
     # Extract Description
     description_element = soup.find("p", {"data-testid": "vuln-description"})
     description = description_element.text.strip() if description_element else "Description not available"
-    
+
     # Fetch vendor and product details from MITRE API
     mitre_api_url = f"https://cveawg.mitre.org/api/cve/{cve_id}"
     try:
@@ -117,15 +130,15 @@ def get_info(cve_id):
             vendor = asset.get('vendor', 'N/A')
             product = asset.get('product', 'N/A')
             affected_assets.append({"vendor": vendor, "product": product})
-        
+
         # Extract CVE State
         cve_state = mitre_response.get('cveMetadata', {}).get('state', 'Not Available')
-    
+
     except requests.exceptions.RequestException as e:
         print(f"Error fetching MITRE data: {e}")
         affected_assets = [{"vendor": "N/A", "product": "N/A"}]
         cve_state = "Not Available"
-    
+
     # Extract References (Advisories, Patches, and Tools)
     references = []
     ref_table = soup.find("table", {"data-testid": "vuln-hyperlinks-table"})
@@ -150,4 +163,3 @@ def get_info(cve_id):
         "exploits": exploits,
         "state": cve_state  # Include CVE state in the returned data
     }
-
