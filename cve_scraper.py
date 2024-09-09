@@ -114,11 +114,6 @@ def get_info(cve_id):
     else:
         cvss_vector = "Vector is not available"
 
-    # Debug prints
-    print("CVSS Vector Element 2:", vector_element_2)
-    print("CVSS Vector Element 3:", vector_element_3)
-    print("CVSS Vector Element 4:", vector_element_4)
-
     # Extract Description
     description_element = soup.find("p", {"data-testid": "vuln-description"})
     description = description_element.text.strip() if description_element else "Description not available"
@@ -128,6 +123,11 @@ def get_info(cve_id):
         mitre_api_url = f"https://cveawg.mitre.org/api/cve/{cve_id}"
         try:
             mitre_response = requests.get(mitre_api_url, timeout=10).json()
+
+            # Check for the error message from MITRE API
+            if mitre_response.get("error") == "CVE_RECORD_DNE":
+                return {"error": f"CVE record for {cve_id} not found."}
+
             affected_assets = []
             affected_list = mitre_response.get('containers', {}).get('cna', {}).get('affected', [])
             for asset in affected_list:
