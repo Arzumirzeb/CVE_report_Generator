@@ -89,10 +89,10 @@
     <div class="download-report">
         <div class="header" onclick="toggleReport()">Download Report</div>
         <div class="content">
-            <a href="{{ url_for('download', file_type='pdf') }}">Download PDF</a>
-            <a href="{{ url_for('download', file_type='docx') }}">Download DOCX</a>
-            <a href="{{ url_for('download', file_type='html') }}">Download HTML</a>
-            <a href="{{ url_for('download', file_type='md') }}">Download Markdown</a>
+            <a href="{{ url_for('download', file_type='pdf', cve_id=cve_title) }}">Download PDF</a>
+            <a href="{{ url_for('download', file_type='docx', cve_id=cve_title) }}">Download DOCX</a>
+            <a href="{{ url_for('download', file_type='html', cve_id=cve_title) }}">Download HTML</a>
+            <a href="{{ url_for('download', file_type='md', cve_id=cve_title) }}">Download Markdown</a>
         </div>
     </div>
 </div>

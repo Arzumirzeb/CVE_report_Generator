@@ -232,8 +232,26 @@ footer {
     margin-top: auto; /* Push footer to bottom of page */
 }
 /* Error Message Styles */
-.error-message {
+
+.flash-messages {
+    margin: 20px;
+}
+
+.flash {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.flash.error {
     color: red; /* Set the text color to red */
     font-weight: bold; /* Optional: Make the text bold */
     margin-top: 10px; /* Add some space above the error message */
 }
+
+.flash.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+/* Additional styles as needed */

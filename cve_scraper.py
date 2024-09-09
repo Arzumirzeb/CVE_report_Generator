@@ -1,14 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import NoSuchElementException
-import time
-import json
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+import time
+import webbrowser
 
 def get_exploits(cve_number):
     # Setup Chrome options
@@ -95,49 +92,72 @@ def get_info(cve_id):
     title_element = soup.find("span", {"data-testid": "vuln-title"})
     cve_title = title_element.text.strip() if title_element else cve_id  # Use CVE ID if title is not available
 
-    # Extract CVSS Score and Vector
-    '''cvss_score_element = soup.find("a", {"data-testid": "vuln-cvss3-panel-score"})
-    cvss_score = cvss_score_element.text.strip() if cvss_score_element else "CVSS Score not available"
-    vector_element = soup.find("span", {"data-testid": "vuln-cvss3-nist-vector"})
-    cvss_vector = vector_element.text.strip() if vector_element else "CVSS Vector not available"'''
-
-     # Retrieve the available CVSS base score
-    cvss_element_2 = soup.find("a", {"id": "Cvss2CalculatorAnchor"})
-    cvss_element_3 = soup.find("a", {"data-testid": "vuln-cvss3-panel-score"})
-    cvss_element_4 = soup.find("a", {"data-testid": "vuln-cvss4-panel-score"})
+    # Retrieve the available CVSS base score
+    cvss_element_2 = soup.find("a", {"id": ["Cvss2CalculatorAnchor","Cvss2CalculatorAnchor"]})
+    cvss_element_3 = soup.find("a", {"data-testid": ["vuln-cvss3-panel-score", "vuln-cvss3-cna-panel-score"]})
+    cvss_element_4 = soup.find("a", {"data-testid": ["vuln-cvss4-panel-score", "Cvss4NistCalculatorAnchorNA"]})
 
     cvss_score = cvss_element_4.text if cvss_element_4 else cvss_element_3.text if cvss_element_3 else cvss_element_2.text if cvss_element_2 else "Base Score is not available"
-
+    
     # Retrieve the CVSS vector
-    vector_element_4 = soup.find("span", {"data-testid": "vuln-cvss4-nist-vector"})
-    vector_element_3 = soup.find("span", {"data-testid": "vuln-cvss3-nist-vector"})
-    vector_element_2 = soup.find("span", {"data-testid": "vuln-cvss2-panel-vector"})
-    cvss_vector = vector_element_4.text if vector_element_4 else vector_element_3.text if vector_element_3 else vector_element_2.text if vector_element_2 else "Vector is not available"
+    vector_element_3 = soup.find("span", {"data-testid": ["vuln-cvss3-cna-vector", "vuln-cvss3-nist-vector"]})
+    vector_element_2 = soup.find("span", {"data-testid": ["vuln-cvss2-panel-vector","vuln-cvss2-panel-vector-na"]})
+    vector_element_4 = soup.find("span", {"data-testid": ["vuln-cvss4-nist-vector", "vuln-cvss4-nist-vector-na"]})
 
+    # Ensure the CVSS vector is selected correctly
+    if vector_element_3:
+        cvss_vector = vector_element_3.text.strip()
+    elif vector_element_2:
+        cvss_vector = vector_element_2.text.strip()
+    elif vector_element_4:
+        cvss_vector = vector_element_4.text.strip()
+    else:
+        cvss_vector = "Vector is not available"
 
+    # Debug prints
+    print("CVSS Vector Element 2:", vector_element_2)
+    print("CVSS Vector Element 3:", vector_element_3)
+    print("CVSS Vector Element 4:", vector_element_4)
 
     # Extract Description
     description_element = soup.find("p", {"data-testid": "vuln-description"})
     description = description_element.text.strip() if description_element else "Description not available"
 
-    # Fetch vendor and product details from MITRE API
-    mitre_api_url = f"https://cveawg.mitre.org/api/cve/{cve_id}"
-    try:
-        mitre_response = requests.get(mitre_api_url, timeout=10).json()
-        affected_assets = []
-        affected_list = mitre_response.get('containers', {}).get('cna', {}).get('affected', [])
-        for asset in affected_list:
-            vendor = asset.get('vendor', 'N/A')
-            product = asset.get('product', 'N/A')
-            affected_assets.append({"vendor": vendor, "product": product})
+    # If NVD data is not available, check MITRE
+    if not title_element or not description_element:
+        mitre_api_url = f"https://cveawg.mitre.org/api/cve/{cve_id}"
+        try:
+            mitre_response = requests.get(mitre_api_url, timeout=10).json()
+            affected_assets = []
+            affected_list = mitre_response.get('containers', {}).get('cna', {}).get('affected', [])
+            for asset in affected_list:
+                vendor = asset.get('vendor', 'N/A')
+                product = asset.get('product', 'N/A')
+                affected_assets.append({"vendor": vendor, "product": product})
 
-        # Extract CVE State
-        cve_state = mitre_response.get('cveMetadata', {}).get('state', 'Not Available')
+            # Extract CVE State
+            cve_state = mitre_response.get('cveMetadata', {}).get('state', 'Not Available')
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching MITRE data: {e}")
-        affected_assets = [{"vendor": "N/A", "product": "N/A"}]
+            # Extract Description from MITRE if NVD does not have it
+            description = mitre_response.get('containers', {}).get('cna', {}).get('description', description)
+
+            # Check if CVE is reserved
+            mitre_url = f"https://cve.mitre.org/cgi-bin/cvename.cgi?name={cve_id}"
+            mitre_response = requests.get(mitre_url)
+            mitre_soup = BeautifulSoup(mitre_response.text, 'html.parser')
+            reserved_link = mitre_soup.find("a", href="https://cve.mitre.org/about/faqs.html#reserved_signify_in_cve_entry")
+            if reserved_link:
+                description = "RESERVED: " + description
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching MITRE data: {e}")
+            affected_assets = [{"vendor": "N/A", "product": "N/A"}]
+            cve_state = "Not Available"
+
+    else:
+        # Default CVE state if no MITRE data
         cve_state = "Not Available"
+        affected_assets = [{"vendor": "N/A", "product": "N/A"}]
 
     # Extract References (Advisories, Patches, and Tools)
     references = []
@@ -145,12 +165,31 @@ def get_info(cve_id):
     if ref_table:
         rows = ref_table.find_all("tr")[1:]  # Skip header row
         for row in rows:
+            # Check for "Broken Link" badge
+            broken_link_badge = row.find("span", {"class": "badge"})
+            if broken_link_badge and "Broken Link" in broken_link_badge.text:
+                print(f"Skipping broken link: {row}")
+                continue
+
             cols = row.find_all("td")
             ref_link = cols[0].find("a")["href"].strip() if cols[0].find("a") else "N/A"
             ref_desc = cols[0].text.strip() if cols[0] else "N/A"
-            references.append({"description": ref_desc, "link": ref_link})
+            if ref_link != "N/A":
+                try:
+                    # Check if the reference link returns a 200 status code
+                    link_response = requests.get(ref_link, timeout=10)
+                    if link_response.status_code == 200:
+                        references.append({"description": ref_desc, "link": ref_link})
+                    else:
+                        print(f"Reference link returned non-200 status: {ref_link}")
+                except requests.exceptions.RequestException as e:
+                    print(f"Error fetching reference link: {e}")
 
-    # Extract Exploits from Exploit-DB
+    # Open up to 5 reference links in the default browser
+    for ref in references[:5]:
+        webbrowser.open(ref["link"])
+
+    # Get Exploits
     exploits = get_exploits(cve_id)
 
     return {
