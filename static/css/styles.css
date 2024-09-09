@@ -231,3 +231,9 @@ footer {
     border-top: 1px solid #444; /* Added border for footer */
     margin-top: auto; /* Push footer to bottom of page */
 }
+/* Error Message Styles */
+.error-message {
+    color: red; /* Set the text color to red */
+    font-weight: bold; /* Optional: Make the text bold */
+    margin-top: 10px; /* Add some space above the error message */
+}

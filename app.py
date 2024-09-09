@@ -18,15 +18,16 @@ def index():
         if not cve_id:
             return render_template('index.html', error="CVE ID is required.")
         
+        # Perform CVE validation
         cve_check_result = check_cve(cve_id)
-        if not cve_check_result:
-            return render_template('index.html', error="Invalid CVE ID.")
+        if cve_check_result != True:  # Updated to handle all errors
+            return render_template('index.html', error=cve_check_result)
         
         info = get_info(cve_id)
         if not info or "cve_title" not in info:
             return render_template('index.html', error="No data found for the provided CVE ID.")
         
-        # File paths
+        # File paths for reports
         file_paths = {
             "pdf": os.path.join(REPORTS_DIR, "cve_report.pdf"),
             "docx": os.path.join(REPORTS_DIR, "cve_report.docx"),
@@ -34,7 +35,7 @@ def index():
             "md": os.path.join(REPORTS_DIR, "cve_report.md")
         }
         
-        # Generate the reports
+        # Generate reports
         try:
             create_pdf(info, file_paths["pdf"])
             create_docx(info, file_paths["docx"])
