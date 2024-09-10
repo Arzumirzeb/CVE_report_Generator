@@ -90,11 +90,3 @@ CVE_Report_Generator/
 ├── requirements.txt    # Python dependencies
 ├── README.md           # This file
 └── .env                # Environment variables (optional)
-```
-
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
----
-
-Feel free to copy this and add it directly to your GitHub repository as your `README.md` file!
