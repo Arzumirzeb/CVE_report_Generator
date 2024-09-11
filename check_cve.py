@@ -1,6 +1,8 @@
 import re
 import datetime
 
+# Fuad Aghayev - This function validates a CVE ID by checking its format, year, and number. 
+# It returns detailed error messages for any format issues or confirms the CVE ID is valid.
 
 def check_cve(cve: str):
     cve = cve.strip()  # Remove any leading/trailing whitespace

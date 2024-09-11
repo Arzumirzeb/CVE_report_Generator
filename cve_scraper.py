@@ -7,6 +7,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 import webbrowser
 
+# Arzu Mirzabayova - Arzu: This function retrieves exploit data from Exploit-DB by using Selenium to automate a browser in headless mode. 
+# It scrapes information such as the exploit's type, platform, author, and whether it's verified, formatting the results into a structured list.
 def get_exploits(cve_number):
     # Setup Chrome options
     chrome_options = Options()
@@ -72,6 +74,8 @@ def get_exploits(cve_number):
 
     return exploits
 
+# Sabina Aliyeva - This function fetches detailed CVE information from NVD and MITRE, including the CVSS score, vectors, descriptions, and affected assets. 
+# It also handles opening reference links in the browser and integrates the exploit data fetched by get_exploits function.
 
 def get_info(cve_id):
     """Fetch CVE details from NVD, MITRE, and Exploit-DB."""

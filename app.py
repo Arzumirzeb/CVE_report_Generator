@@ -5,6 +5,9 @@ from cve_report import create_pdf, create_docx, create_html, create_md
 import os
 import webbrowser
 from threading import Timer
+ 
+# Fuad Aghayev -  This Flask application handles CVE ID input, validates it, and generates reports in PDF, DOCX, HTML, and Markdown formats. 
+# It provides download functionality for these reports and automatically opens the application in a browser upon startup.
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Needed for session management
@@ -85,6 +88,6 @@ if __name__ == '__main__':
     # Start a timer to open the browser after 1 second
     
     Timer(1, open_browser).start()
-    app.run(debug=True)
+    app.run()
 
 

@@ -6,6 +6,9 @@ from reportlab.lib import colors
 from docx import Document
 from markdown2 import markdown
 
+# Nijat Ahmadli - This code generates reports in PDF, DOCX, HTML, and Markdown formats. 
+# It creates detailed CVE reports including sections for CVSS score, description, affected assets, exploits, and references.
+
 def create_pdf(cve_info, file_path):
     """Generate a PDF report without tables and with a simple list for references."""
     doc = SimpleDocTemplate(file_path, pagesize=letter)
