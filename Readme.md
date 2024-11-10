@@ -1,6 +1,3 @@
-Sure! Here’s the README in the correct format, ready for you to add to GitHub:
-
----
 
 # CVE Report Generator
 
